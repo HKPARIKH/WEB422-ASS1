@@ -131,8 +131,6 @@ app.delete("/api/movies/:id",(req,res)=>
 });
 
 
-var connectionString = "mongodb+srv://Harsh:Harsh1234@senecaweb..kmoetpc.mongodb.net/sample_mflix?retryWrites =true&w=majority";
-console.log(connectionString);
 
 db.initialize(process.env.MONGODB_CONN_STRING).then(()=>
 {
