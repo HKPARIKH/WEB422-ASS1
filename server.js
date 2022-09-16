@@ -20,10 +20,11 @@ app.use(express.json());
 app.use(cors());
 const MoviesDB = require("./modules/moviesDB.js");
 const db = new MoviesDB();
+
 const HTTP_PORT = process.env.PORT || 8080;
 
 
-app.get("/",function(req,res)
+app.get("/", (req,res) => 
 {
     res.json({msg:"API Listening"});
 });
@@ -132,7 +133,7 @@ app.delete("/api/movies/:id",(req,res)=>
 
 
 // var connectionString = "mongodb+srv://Harsh:Harsh1234@senecaweb..kmoetpc.mongodb.net/sample_mflix?retryWrites=true&w=majority";
-//console.log(connectionString);
+// console.log(connectionString);
 
 db.initialize(process.env.MONGODB_CONN_STRING).then(()=>
 {
