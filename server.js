@@ -12,92 +12,98 @@
 ********************************************************************************/ 
 
 
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const MoviesDB = require('./modules/moviesDB.js');
+
 const app = express();
-
-const HTTP_PORT = process.env.PORT || 3000;
-
-const MoviesDB = require("../modules/moviesDB");
+const HTTP_PORT = process.env.PORT || 8080;
 const db = new MoviesDB();
 
-require("dotenv").config();
 
+//Middleware
 app.use(cors());
+//For using .env file
+require('dotenv').config();
+// Add support for incoming JSON entities
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("WEB422 Assignment-1 (Web-API)");
+  res.json({ message: "API Listening" });
 });
 
-app.post("/api/movies", async (req, res) => {
-  try {
-    if (Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: "No movie data" });
-    }
-    const data = await db.addNewMovie(req.body);
-    res.status(201).json(data);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+app.post("/api/movies", (req, res) => {
+  db.addMovie(req.body)
+    .then((data) => {
+      res.status(201).json(data);
+    })
+    .catch((err) => {
+      res.status(500).json({ message: err });
+    });
 });
 
-app.get("/api/movies", async (req, res) => {
-  try {
-    const data = await db.getAllMovies(
-      req.query.page,
-      req.query.perPage,
-      req.query.title || null
-    );
-    if (data.length === 0) {
-      return res.status(204).send();
-    }
-    res.json(data);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+app.get("/api/movies", (req, res) => {
+  if (!req.query.page && !req.query.perPage)
+    return res
+      .status(400)
+      .json({ message: "page and perPage query parameters are required" });
+
+  req.query.page = req.query.page;
+  req.query.perPage = req.query.perPage;
+  req.query.title = req.query.title || "title";
+  db.getAllMovies(req.query.page, req.query.perPage, req.query.title)
+    .then((data) => {
+      res.status(201).json(data);
+    })
+    .catch((err) => {
+      res.status(500).json({ message: err });
+    });
 });
 
-app.get("/api/movies/:_id", async (req, res) => {
-  try {
-    const data = await db.getMovieById(req.params._id);
-    if (!data) {
-      return res.status(400).json({ error: "Movie not found." });
-    }
-    res.send(data);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+
+app.get("/api/movies/:id", (req, res) => {
+  db.getMovieById(req.params.id)
+    .then((data) => {
+      res.status(201).json(data);
+    })
+    .catch((err) => {
+      res.status(500).json({ message: err });
+    });
 });
 
-app.put("/api/movie/:_id", async (req, res) => {
-  try {
-    if (Object.keys(req.body).length === 0) {
-      return res.status(400).json({ error: "No data provided to update." });
-    }
-    const data = await db.updateMovieById(req.body, req.params._id);
-    res.json({ success: "Movie updated!" });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+app.put("/api/movies/:id", (req, res) => {
+  db.updateMovieById(req.body, req.params.id)
+    .then((data) => {
+      res.status(201).json({ message: "Movie Updated" });
+    })
+    .catch((err) => {
+      res.status(500).json({ message: err });
+    });
 });
 
-app.delete("/api/movies/:_id", async (req, res) => {
-  try {
-    const movie = await db.getMovieById(req.params._id);
-    await db.deleteMovieById(req.params._id);
-    res.json({ success: `Movie - ${movie.title} deleted!` });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+app.delete("/api/movies/:id", (req, res) => {
+  db.deleteMovieById(req.params.id)
+    .then((data) => {
+      res.status(201).json({ message: "Movie Deleted" });
+    })
+    .catch((err) => {
+      res.status(500).json({ message: err });
+    });
+});
+
+
+// Resource not found (this should be at the end)
+app.use((req, res) => {
+  res.status(404).send("Resource not found");
 });
 
 db.initialize(process.env.MONGODB_CONN_STRING)
   .then(() => {
     app.listen(HTTP_PORT, () => {
-      console.log(`Server listening on port ${HTTP_PORT}`);
+      console.log(`server listening on: ${HTTP_PORT}`);
     });
   })
   .catch((err) => {
-    console.log(err.message);
+    console.log(err);
   });
