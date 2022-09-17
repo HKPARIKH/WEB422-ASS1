@@ -14,19 +14,17 @@
 
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
+const path = require('path');
+const bodyparser = require('body-parser');
 const MoviesDB = require('./modules/moviesDB.js');
-
 const app = express();
-const HTTP_PORT = process.env.PORT || 8080;
 const db = new MoviesDB();
+const dotenv = require('dotenv').config();
+const HTTP_PORT = process.env.PORT || 8080;
 
-
-//Middleware
+app.use(bodyparser.json());
 app.use(cors());
-//For using .env file
-require('dotenv').config();
-// Add support for incoming JSON entities
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
